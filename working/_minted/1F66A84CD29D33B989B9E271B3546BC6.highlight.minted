@@ -1,0 +1,13 @@
+\begin{MintedVerbatim}[commandchars=\\\{\}]
+\PYG{k}{pub}\PYG{+w}{ }\PYG{k}{fn}\PYG{+w}{ }\PYG{n+nf}{update\PYGZus{}asset\PYGZus{}config\PYGZus{}account}\PYG{p}{(}
+\PYG{+w}{     }\PYG{n}{ctx}\PYG{p}{:}\PYG{+w}{ }\PYG{n+nc}{Context}\PYG{o}{\PYGZlt{}}\PYG{n}{UpdateAssetConfigAccount}\PYG{o}{\PYGZgt{}}\PYG{p}{,}
+\PYG{+w}{     }\PYG{n}{nav\PYGZus{}data}\PYG{p}{:}\PYG{+w}{ }\PYG{n+nb}{Vec}\PYG{o}{\PYGZlt{}}\PYG{n}{NavData}\PYG{o}{\PYGZgt{}}\PYG{p}{,}
+\PYG{+w}{     }\PYG{n}{price\PYGZus{}difference\PYGZus{}bps}\PYG{p}{:}\PYG{+w}{ }\PYG{k+kt}{u16}\PYG{p}{,}
+\PYG{+w}{     }\PYG{c+c1}{// Remove asset\PYGZus{}type parameter}
+\PYG{+w}{ }\PYG{p}{)}\PYG{+w}{ }\PYG{p}{\PYGZhy{}\PYGZgt{}}\PYG{+w}{ }\PYG{n+nb}{Result}\PYG{o}{\PYGZlt{}}\PYG{p}{(}\PYG{p}{)}\PYG{o}{\PYGZgt{}}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{     }\PYG{c+c1}{// ....}
+\PYG{+w}{     }\PYG{c+c1}{// Remove: asset\PYGZus{}config.asset\PYGZus{}type = asset\PYGZus{}type;}
+
+\PYG{+w}{     }\PYG{n+nb}{Ok}\PYG{p}{(}\PYG{p}{(}\PYG{p}{)}\PYG{p}{)}
+\PYG{+w}{ }\PYG{p}{\PYGZcb{}}
+\end{MintedVerbatim}

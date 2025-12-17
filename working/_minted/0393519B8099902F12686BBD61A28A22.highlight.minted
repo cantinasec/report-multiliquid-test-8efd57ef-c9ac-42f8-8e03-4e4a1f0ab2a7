@@ -1,0 +1,4 @@
+\begin{MintedVerbatim}[commandchars=\\\{\}]
+\PYG{n}{require}\PYG{o}{!}\PYG{p}{(}\PYG{n}{redemption\PYGZus{}fee\PYGZus{}bps}\PYG{+w}{ }\PYG{o}{\PYGZlt{}}\PYG{o}{=}\PYG{+w}{ }\PYG{l+m+mi}{9900}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{ErrorCode}\PYG{p}{::}\PYG{n}{OutOfRange}\PYG{p}{)}\PYG{p}{;}\PYG{+w}{  }\PYG{c+c1}{// Up to 99\PYGZpc{}}
+\PYG{n}{require}\PYG{o}{!}\PYG{p}{(}\PYG{n}{discount\PYGZus{}rate\PYGZus{}bps}\PYG{+w}{ }\PYG{o}{\PYGZlt{}}\PYG{o}{=}\PYG{+w}{ }\PYG{l+m+mi}{9900}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{ErrorCode}\PYG{p}{::}\PYG{n}{OutOfRange}\PYG{p}{)}\PYG{p}{;}\PYG{+w}{    }\PYG{c+c1}{// Up to 99\PYGZpc{}}
+\end{MintedVerbatim}

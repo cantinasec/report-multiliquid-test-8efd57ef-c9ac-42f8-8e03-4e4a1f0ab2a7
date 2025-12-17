@@ -1,0 +1,4 @@
+\begin{MintedVerbatim}[commandchars=\\\{\}]
+\PYG{n}{from}\PYG{p}{:}\PYG{+w}{ }\PYG{k+kp}{\PYGZam{}}\PYG{n+nc}{InterfaceAccount}\PYG{o}{\PYGZlt{}}\PYG{o}{\PYGZsq{}}\PYG{n+na}{info}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{TokenAccount}\PYG{o}{\PYGZgt{}}\PYG{p}{,}
+\PYG{n}{to}\PYG{p}{:}\PYG{+w}{ }\PYG{k+kp}{\PYGZam{}}\PYG{n+nc}{InterfaceAccount}\PYG{o}{\PYGZlt{}}\PYG{o}{\PYGZsq{}}\PYG{n+na}{info}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{TokenAccount}\PYG{o}{\PYGZgt{}}
+\end{MintedVerbatim}

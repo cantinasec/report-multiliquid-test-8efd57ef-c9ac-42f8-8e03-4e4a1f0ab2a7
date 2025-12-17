@@ -1,0 +1,84 @@
+
+\hypertarget{executive-summary}{%
+\section{Security Review Summary}\label{executive-summary}}
+
+\vspace{0.1cm}
+
+\input{introduction.tex}
+
+\vspace{0.1cm}
+
+
+% Unused fields: 1 Multiliquid https://www.multiliquid.xyz/ DeFi, AMM xxx xxx
+From Nov 23rd to Nov 24th the Cantina team conducted a review of \href{https://github.com/cantina-forks/exo-tech-xyz-multiliquid-swap-program}{Multiliquid - Solana - swap - program} on commit hash \href{https://github.com/cantina-forks/exo-tech-xyz-multiliquid-swap-program/tree/f316df4cc379b4309a838e808e02c12807af2c21/}{f316df4c}. The team identified a total of \textbf{20} issues:
+ \\ 
+
+\begin{longtable}{|p{4cm}|p{2cm}|p{2cm}|p{3cm}|}
+    \caption*{\textbf{Issues Found}}
+    \hline
+    \textbf{Severity} & \textbf{Count} & \textbf{Fixed} & \textbf{Acknowledged} \\
+    \hline Critical Risk        & 0           & 0           & 0            \\
+    \hline High Risk            & 0               & 0               & 0                \\
+    \hline Medium Risk          & 1             & 1             & 0              \\
+    \hline Low Risk             & 5                & 4                & 1                 \\
+    \hline Gas Optimizations    & 1   & 0   & 1    \\ 
+    \hline Informational        & 13      & 11      & 2       \\
+    \hline
+    \textbf{Total} & \textbf{20} & \textbf{16} & \textbf{4} \\
+    \hline
+\end{longtable}
+
+
+
+
+\hypertarget{scope}{%
+\subsection{Scope}\label{scope}}
+The security review had the following components in scope for \href{https://github.com/cantina-forks/exo-tech-xyz-multiliquid-swap-program}{Multiliquid - Solana - swap - program} on commit hash \href{https://github.com/cantina-forks/exo-tech-xyz-multiliquid-swap-program/tree/f316df4cc379b4309a838e808e02c12807af2c21/}{f316df4c}:
+
+\begin{minted}[]{bash}
+programs/swap-program
+├── Cargo.toml
+├── src
+│   ├── constants.rs
+│   ├── error.rs
+│   ├── instructions
+│   │   ├── add_liquidity.rs
+│   │   ├── claim_fees.rs
+│   │   ├── close_pair.rs
+│   │   ├── confirm_new_admin.rs
+│   │   ├── init_asset_config_account.rs
+│   │   ├── init_global_config.rs
+│   │   ├── init_pair.rs
+│   │   ├── mod.rs
+│   │   ├── remove_liquidity.rs
+│   │   ├── set_new_admin.rs
+│   │   ├── set_paused_for_asset.rs
+│   │   ├── set_paused_for_lp_stable_config.rs
+│   │   ├── swap.rs
+│   │   ├── update_asset_config_account.rs
+│   │   ├── update_global_config.rs
+│   │   └── update_pair.rs
+│   ├── lib.rs
+│   ├── macros.rs
+│   ├── math.rs
+│   ├── spl_helpers.rs
+│   └── state
+│       ├── asset_config.rs
+│       ├── global_config.rs
+│       ├── lp_stable_config.rs
+│       ├── mod.rs
+│       ├── pair.rs
+│       └── user_vault_info.rs
+└── Xargo.toml
+\end{minted}
+
+
+
+
+
+
+
+
+
+
+

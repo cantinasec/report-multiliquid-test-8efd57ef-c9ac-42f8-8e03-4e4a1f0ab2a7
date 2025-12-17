@@ -1,0 +1,8 @@
+\begin{MintedVerbatim}[commandchars=\\\{\}]
+\PYG{g+gd}{\PYGZhy{} /// NavData is used to store info about the methpds to retrieve the NAV data for a specific asset}
+\PYG{g+gi}{+ /// NavData is used to store info about the methods to retrieve the NAV data for a specific asset}
+
+
+\PYG{g+gd}{\PYGZhy{} // DRY function to read the price from an account (expecting the price to be stored as au64)}
+\PYG{g+gi}{+ // DRY function to read the price from an account (expecting the price to be stored as u64)}
+\end{MintedVerbatim}

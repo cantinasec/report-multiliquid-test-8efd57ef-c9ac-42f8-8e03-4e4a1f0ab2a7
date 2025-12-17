@@ -1,0 +1,112 @@
+\documentclass[10pt]{article}
+\usepackage{draftwatermark}
+
+% Page layout - use geometry only
+\usepackage[a4paper, left=2cm, right=2cm, top=2cm, bottom=2cm]{geometry}
+
+% Font and encoding
+\usepackage{fontspec}  % Unicode support for LuaLaTeX
+\setmainfont{Open Sans}[
+  UprightFont = *-Regular,
+  BoldFont = *-Bold,
+  ItalicFont = *-Italic,
+  BoldItalicFont = *-BoldItalic
+]
+% Define \fosfamily for compatibility with opensans package
+\newfontfamily\fosfamily{Open Sans}[
+  UprightFont = *-Regular,
+  BoldFont = *-Bold
+]
+\usepackage{microtype}
+
+% Math packages
+\usepackage{amsmath,amsfonts,amsthm}
+
+% Essential packages
+\usepackage{parskip}
+\usepackage{svg}
+\usepackage[english]{babel}
+\usepackage[pages=some]{background}
+\backgroundsetup{
+scale=1,
+color=black,
+opacity=1,
+angle=0,
+contents={%
+  \includegraphics[width=\paperwidth,height=\paperheight]{img/cantina-door.pdf}
+  }%
+}
+
+\usepackage{graphicx}
+\usepackage[htt]{hyphenat}
+\usepackage[table]{xcolor}
+\usepackage{tcolorbox}
+\usepackage{etoolbox}
+
+% Colors
+\definecolor{cantinalink}{HTML}{55747D}
+\definecolor{cantinaplatinum}{HTML}{E7E5E3}
+\definecolor{textbg}{HTML}{F5F5F5}
+
+% Code highlighting
+\usepackage{minted}
+\usemintedstyle{perldoc}
+% Set monospace font for minted to support Unicode
+\setmonofont{DejaVu Sans Mono}[Scale=MatchLowercase]
+\setminted{frame=single, rulecolor=cantinaplatinum, fontsize=\small, samepage=false, breaklines=true, breakanywhere}
+
+% Table enhancements
+\usepackage{needspace}
+\usepackage{ltablex}
+\keepXColumns
+\usepackage{booktabs}
+
+% Links
+\usepackage[hyphens]{url}
+\PassOptionsToPackage{hyphens}{url}\usepackage[hidelinks = true, colorlinks = true, linkcolor = black, urlcolor = cantinalink]{hyperref}
+
+% Redefine \texttt to add light gray background (tight fit, rounded corners)
+% Must be after hyperref to work in TOC
+\let\oldtexttt\texttt
+\renewcommand{\texttt}[1]{%
+  \tcbox[colback=textbg, colframe=textbg, boxrule=0pt, arc=3pt, left=1pt, right=1pt, top=0.5pt, bottom=0.5pt, on line, before skip=0pt, after skip=0pt, boxsep=0pt, nobeforeafter]{\oldtexttt{#1}}%
+}
+
+% Fixes and workarounds
+\def\tightlist{}
+\AtBeginEnvironment{cases}{\rowcolors{0}{}{}}
+\setlength\emergencystretch{3cm}
+
+% Minted fix for red boxes
+\makeatletter
+\AtBeginEnvironment{minted}{\dontdofcolorbox}
+\def\dontdofcolorbox{\renewcommand\fcolorbox[4][]{##4}}
+\makeatother
+
+\sloppy
+
+\begin{document}
+
+    \input{title.tex}
+    \clearpage
+
+    \tableofcontents
+    \clearpage
+
+    \input{pre_report.tex}
+    \clearpage
+
+    \input{summary.tex}
+    \clearpage
+
+    \input{overview.tex}
+    \clearpage
+    
+    \section{Findings}
+    \rowcolors{2}{gray!10}{white}
+    \input{report.tex}
+    \clearpage 
+
+    \input{post_report.tex}
+
+\end{document}

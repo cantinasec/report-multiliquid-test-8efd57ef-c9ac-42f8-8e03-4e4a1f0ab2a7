@@ -1,0 +1,13 @@
+\begin{MintedVerbatim}[commandchars=\\\{\}]
+\PYG{n}{close\PYGZus{}account}\PYG{p}{(}
+\PYG{+w}{  }\PYG{n}{CpiContext}\PYG{p}{::}\PYG{n}{new\PYGZus{}with\PYGZus{}signer}\PYG{p}{(}
+\PYG{+w}{     }\PYG{n}{ctx}\PYG{p}{.}\PYG{n}{accounts}\PYG{p}{.}\PYG{n}{token\PYGZus{}program\PYGZus{}stable}\PYG{p}{.}\PYG{n}{to\PYGZus{}account\PYGZus{}info}\PYG{p}{(}\PYG{p}{)}\PYG{p}{,}
+\PYG{+w}{        }\PYG{n}{CloseAccount}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{          }\PYG{n}{account}\PYG{p}{:}\PYG{+w}{ }\PYG{n+nc}{ctx}\PYG{p}{.}\PYG{n}{accounts}\PYG{p}{.}\PYG{n}{stable\PYGZus{}coin\PYGZus{}vault\PYGZus{}token\PYGZus{}account}\PYG{p}{.}\PYG{n}{to\PYGZus{}account\PYGZus{}info}\PYG{p}{(}\PYG{p}{)}\PYG{p}{,}
+\PYG{+w}{          }\PYG{n}{destination}\PYG{p}{:}\PYG{+w}{ }\PYG{n+nc}{ctx}\PYG{p}{.}\PYG{n}{accounts}\PYG{p}{.}\PYG{n}{admin}\PYG{p}{.}\PYG{n}{to\PYGZus{}account\PYGZus{}info}\PYG{p}{(}\PYG{p}{)}\PYG{p}{,}
+\PYG{+w}{          }\PYG{n}{authority}\PYG{p}{:}\PYG{+w}{ }\PYG{n+nc}{ctx}\PYG{p}{.}\PYG{n}{accounts}\PYG{p}{.}\PYG{n}{program\PYGZus{}authority}\PYG{p}{.}\PYG{n}{to\PYGZus{}account\PYGZus{}info}\PYG{p}{(}\PYG{p}{)}\PYG{p}{,}
+\PYG{+w}{        }\PYG{p}{\PYGZcb{}}\PYG{p}{,}
+\PYG{+w}{       }\PYG{o}{\PYGZam{}}\PYG{p}{[}\PYG{n}{signer\PYGZus{}seeds}\PYG{p}{]}\PYG{p}{,}
+\PYG{+w}{   }\PYG{p}{)}
+\PYG{p}{)}\PYG{o}{?}\PYG{p}{;}
+\end{MintedVerbatim}

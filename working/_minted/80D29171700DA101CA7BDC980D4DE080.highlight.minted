@@ -1,0 +1,36 @@
+\begin{MintedVerbatim}[commandchars=\\\{\}]
+programs/swap\PYGZhy{}program
+├──\PYG{+w}{ }Cargo.toml
+├──\PYG{+w}{ }src
+│\PYG{+w}{   }├──\PYG{+w}{ }constants.rs
+│\PYG{+w}{   }├──\PYG{+w}{ }error.rs
+│\PYG{+w}{   }├──\PYG{+w}{ }instructions
+│\PYG{+w}{   }│\PYG{+w}{   }├──\PYG{+w}{ }add\PYGZus{}liquidity.rs
+│\PYG{+w}{   }│\PYG{+w}{   }├──\PYG{+w}{ }claim\PYGZus{}fees.rs
+│\PYG{+w}{   }│\PYG{+w}{   }├──\PYG{+w}{ }close\PYGZus{}pair.rs
+│\PYG{+w}{   }│\PYG{+w}{   }├──\PYG{+w}{ }confirm\PYGZus{}new\PYGZus{}admin.rs
+│\PYG{+w}{   }│\PYG{+w}{   }├──\PYG{+w}{ }init\PYGZus{}asset\PYGZus{}config\PYGZus{}account.rs
+│\PYG{+w}{   }│\PYG{+w}{   }├──\PYG{+w}{ }init\PYGZus{}global\PYGZus{}config.rs
+│\PYG{+w}{   }│\PYG{+w}{   }├──\PYG{+w}{ }init\PYGZus{}pair.rs
+│\PYG{+w}{   }│\PYG{+w}{   }├──\PYG{+w}{ }mod.rs
+│\PYG{+w}{   }│\PYG{+w}{   }├──\PYG{+w}{ }remove\PYGZus{}liquidity.rs
+│\PYG{+w}{   }│\PYG{+w}{   }├──\PYG{+w}{ }set\PYGZus{}new\PYGZus{}admin.rs
+│\PYG{+w}{   }│\PYG{+w}{   }├──\PYG{+w}{ }set\PYGZus{}paused\PYGZus{}for\PYGZus{}asset.rs
+│\PYG{+w}{   }│\PYG{+w}{   }├──\PYG{+w}{ }set\PYGZus{}paused\PYGZus{}for\PYGZus{}lp\PYGZus{}stable\PYGZus{}config.rs
+│\PYG{+w}{   }│\PYG{+w}{   }├──\PYG{+w}{ }swap.rs
+│\PYG{+w}{   }│\PYG{+w}{   }├──\PYG{+w}{ }update\PYGZus{}asset\PYGZus{}config\PYGZus{}account.rs
+│\PYG{+w}{   }│\PYG{+w}{   }├──\PYG{+w}{ }update\PYGZus{}global\PYGZus{}config.rs
+│\PYG{+w}{   }│\PYG{+w}{   }└──\PYG{+w}{ }update\PYGZus{}pair.rs
+│\PYG{+w}{   }├──\PYG{+w}{ }lib.rs
+│\PYG{+w}{   }├──\PYG{+w}{ }macros.rs
+│\PYG{+w}{   }├──\PYG{+w}{ }math.rs
+│\PYG{+w}{   }├──\PYG{+w}{ }spl\PYGZus{}helpers.rs
+│\PYG{+w}{   }└──\PYG{+w}{ }state
+│\PYG{+w}{       }├──\PYG{+w}{ }asset\PYGZus{}config.rs
+│\PYG{+w}{       }├──\PYG{+w}{ }global\PYGZus{}config.rs
+│\PYG{+w}{       }├──\PYG{+w}{ }lp\PYGZus{}stable\PYGZus{}config.rs
+│\PYG{+w}{       }├──\PYG{+w}{ }mod.rs
+│\PYG{+w}{       }├──\PYG{+w}{ }pair.rs
+│\PYG{+w}{       }└──\PYG{+w}{ }user\PYGZus{}vault\PYGZus{}info.rs
+└──\PYG{+w}{ }Xargo.toml
+\end{MintedVerbatim}

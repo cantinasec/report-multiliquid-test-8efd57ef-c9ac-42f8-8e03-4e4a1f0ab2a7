@@ -1,0 +1,6 @@
+\begin{MintedVerbatim}[commandchars=\\\{\}]
+\PYG{+w}{ }  if let Some(protocol\PYGZus{}fees\PYGZus{}bps) = protocol\PYGZus{}fees\PYGZus{}bps \PYGZob{}
+\PYG{g+gi}{+     require!(protocol\PYGZus{}fees\PYGZus{}bps \PYGZlt{}= 9900, ErrorCode::OutOfRange);}
+\PYG{+w}{ }     new\PYGZus{}protocol\PYGZus{}fees\PYGZus{}bps = protocol\PYGZus{}fees\PYGZus{}bps;
+\PYG{+w}{ } \PYGZcb{}
+\end{MintedVerbatim}

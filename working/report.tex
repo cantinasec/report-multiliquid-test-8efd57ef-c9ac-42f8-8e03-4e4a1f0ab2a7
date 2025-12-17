@@ -1,0 +1,718 @@
+\subsection{Medium Risk}\label{medium-risk}
+
+\subsubsection{\texorpdfstring{\texttt{U64DynamicAddress} Pricing cannot
+distinguish between
+assets}{U64DynamicAddress Pricing cannot distinguish between assets}}\label{u64dynamicaddress-pricing-cannot-distinguish-between-assets}
+
+\textbf{Severity:} Medium Risk
+
+\textbf{Context:} \emph{(No context files were provided by the
+reviewer)}
+
+\textbf{Description:} When a \texttt{U64DynamicAddress} type is
+processed in the \texttt{get\_nav} function, it reads the nav from the
+first account in the unchecked \texttt{remaining\_accounts} array. There
+are a few issues with how this is done.
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Only the first of the user-provided \texttt{remaining\_accounts} is
+  ever read from and used for all dynamic prices of the asset.
+\item
+  The only requirement for this account is that it be owned by a
+  specified \texttt{nav\_program\_id} account. Should this
+  \texttt{nav\_program\_id} own multiple accounts then any one of them
+  could be passed and read as a price for any other assets in this
+  process.
+\end{enumerate}
+
+\textbf{Recommendation:}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Either iterate through the remaining\_accounts or
+  don\textquotesingle t allow multiple dynamic pricing accounts for a
+  single asset.
+\item
+  Determine if supporting dynamic accounts is required and whether one
+  could not ask the data account owner for the price of the asset rather
+  than directly querying the data account. Another possibility could
+  include having the pricing data account owned by the swap program
+  itself and tracking which account would go to which asset.
+\end{enumerate}
+
+\subsection{Low Risk}\label{low-risk}
+
+\subsubsection{Global config initialization can be
+frontrun}\label{global-config-initialization-can-be-frontrun}
+
+\textbf{Severity:} Low Risk
+
+\textbf{Context:}
+\href{https://cantina.xyz/code/8efd57ef-c9ac-42f8-8e03-4e4a1f0ab2a7/programs/swap-program/src/instructions/init_global_config.rs\#L27}{init\_global\_config.rs\#L27}
+
+\textbf{Description:} There is no access control on the global config
+initialization. A malicious actor can frontrun the initialization with
+their own parameters. If this goes undetected, user funds could be at
+risk.
+
+\textbf{Recommendation:} Consider one of the following:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Restrict initialization to privileged accounts.
+\item
+  Always ensure initialization scripts validate configurations after the
+  transaction submission.
+\end{enumerate}
+
+\subsubsection{Asset type modification post-initialization causes denial
+of service on
+swaps}\label{asset-type-modification-post-initialization-causes-denial-of-service-on-swaps}
+
+\textbf{Severity:} Low Risk
+
+\textbf{Context:}
+\href{https://cantina.xyz/code/8efd57ef-c9ac-42f8-8e03-4e4a1f0ab2a7/programs/swap-program/src/instructions/update_asset_config_account.rs\#L51}{update\_asset\_config\_account.rs\#L51}
+
+\textbf{Description:} The \texttt{update\_asset\_config\_account()}
+function allows the protocol admin to modify the asset\_type field of an
+AssetConfig account after initialization. This will break the swap
+implementation, causing swaps to fail.
+
+The \texttt{swap()} function enforces strict asset type validation at
+\texttt{swap.rs}:
+
+\begin{minted}[]{rust}
+// check that the asset types are correct
+require!(ctx.accounts.rwa_config.asset_type == AssetType::Rwa, ErrorCode::InvalidAssetType);
+require!(ctx.accounts.stable_config.asset_type == AssetType::Stable, ErrorCode::InvalidAssetType);
+\end{minted}
+
+When an admin changes the asset\_type of an asset from its original
+designation (e.g., changing a Stable to an Rwa, or vice versa), all
+swaps involving that asset will permanently revert with an
+InvalidAssetType error. This effectively bricks all liquidity pools
+using that asset. However, LPs are not affected, as such validations do
+not happen in the withdrawal liquidity-related functions.
+
+\textbf{Recommendation:} Make asset\_type immutable after initialization
+by removing it from the \texttt{update\_asset\_config\_account()}
+function:
+
+\begin{minted}[]{rust}
+pub fn update_asset_config_account(
+     ctx: Context<UpdateAssetConfigAccount>,
+     nav_data: Vec<NavData>,
+     price_difference_bps: u16,
+     // Remove asset_type parameter
+ ) -> Result<()> {
+     // ....
+     // Remove: asset_config.asset_type = asset_type;
+
+     Ok(())
+ }
+\end{minted}
+
+If asset type updates must be supported for legitimate reasons, add
+comprehensive validation:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Check that no active pairs exist using this asset before allowing type
+  changes.
+\item
+  Add a time-lock mechanism requiring a delay before the change takes
+  effect.
+\item
+  Emit events to warn LPs of the upcoming change.
+\item
+  Consider adding a separate "migration" function with stricter
+  controls.
+\end{enumerate}
+
+\subsubsection{No validation for combined fees causes transaction panic
+when total exceeds
+100\%}\label{no-validation-for-combined-fees-causes-transaction-panic-when-total-exceeds-100}
+
+\textbf{Severity:} Low Risk
+
+\textbf{Context:}
+\href{https://cantina.xyz/code/8efd57ef-c9ac-42f8-8e03-4e4a1f0ab2a7/programs/swap-program/src/math.rs\#L90-L97}{math.rs\#L90-L97}
+
+\textbf{Description:} The protocol validates individual fee parameters
+but fails to validate that combined fees (pair fees + protocol fees)
+don\textquotesingle t exceed 100\%, causing transaction panics during
+swaps.
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Init\_pair / update\_pair.
+\end{enumerate}
+
+\begin{minted}[]{rust}
+require!(redemption_fee_bps <= 9900, ErrorCode::OutOfRange);  // Up to 99%
+require!(discount_rate_bps <= 9900, ErrorCode::OutOfRange);    // Up to 99%
+\end{minted}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{1}
+\tightlist
+\item
+  Init\_global\_config.
+\end{enumerate}
+
+\begin{minted}[]{rust}
+require!(protocol_fees_bps <= 9900, ErrorCode::OutOfRange);  // Up to 99%
+\end{minted}
+
+As a result, the total fees calculated exceed the amount\_in parameter
+during stable-to-asset swaps, resulting in an underflow.
+
+\textbf{Proof of Concept:} Consider the following scenario:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Admin sets protocol\_fees\_bps = 200 (2\%).
+\item
+  LP sets redemption\_fee\_bps = 9900 (99\%).
+\item
+  User attempts swap: 9900 + 200 = 10100 \textgreater{} 10000.
+\item
+  Transaction panics with a MathOverflow error instead of meaningful
+  message.
+\end{enumerate}
+
+\textbf{Recommendation:} Add validations in all fee configuration
+functions to ensure the total\_fee\_bps remains less than 10,000. Or
+consider adding a validation in the \texttt{calculate\_swap\_results()}
+function.
+
+\subsubsection{\texorpdfstring{Missing \texttt{protocol\_fee\_bps} upper
+bounds validation in update global
+config}{Missing protocol\_fee\_bps upper bounds validation in update global config}}\label{missing-protocol_fee_bps-upper-bounds-validation-in-update-global-config}
+
+\textbf{Severity:} Low Risk
+
+\textbf{Context:}
+\href{https://cantina.xyz/code/8efd57ef-c9ac-42f8-8e03-4e4a1f0ab2a7/programs/swap-program/src/instructions/update_global_config.rs\#L43-L45}{update\_global\_config.rs\#L43-L45}
+
+\textbf{Description:} The \texttt{update\_global\_config()} function
+allows updating protocol\_fees\_bps without any validation, unlike
+\texttt{init\_global\_config()}, which enforces a maximum of 9900 BPS.
+
+As a result, the function allows setting protocol\_fees\_bps to any u16
+value (up to 65535), breaking protocol\_fee\_bps assumptions throughout
+the protocol.
+
+\textbf{Recommendation:} Consider adding the same validation used in
+\texttt{init\_global\_config()}:
+
+\begin{minted}[]{diff}
+   if let Some(protocol_fees_bps) = protocol_fees_bps {
++     require!(protocol_fees_bps <= 9900, ErrorCode::OutOfRange);
+      new_protocol_fees_bps = protocol_fees_bps;
+  }
+\end{minted}
+
+\subsubsection{\texorpdfstring{Vault token accounts not closed in
+\texttt{close\_pair()}
+instruction}{Vault token accounts not closed in close\_pair() instruction}}\label{vault-token-accounts-not-closed-in-close_pair-instruction}
+
+\textbf{Severity:} Low Risk
+
+\textbf{Context:}
+\href{https://cantina.xyz/code/8efd57ef-c9ac-42f8-8e03-4e4a1f0ab2a7/programs/swap-program/src/instructions/close_pair.rs\#L39-L59}{close\_pair.rs\#L39-L59}
+
+\textbf{Description:} The close\_pair instruction fails to close the SPL
+token vault accounts (stable\_coin\_vault\_token\_account and
+asset\_token\_vault\_token\_account) when the reference counter (used)
+reaches zero.
+
+While the instruction properly:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Transfers remaining tokens back to the LP.
+\item
+  Closes the UserVaultInfo PDA accounts.
+\end{enumerate}
+
+It does not close the actual SPL token vault accounts themselves,
+resulting in orphaned token accounts that permanently lock rent
+on-chain.
+
+\textbf{Recommendation:} Add SPL token account closure to the
+\texttt{close\_pair()} instruction \texttt{when\ used\ ==\ 0}:
+
+\begin{minted}[]{rust}
+close_account(
+  CpiContext::new_with_signer(
+     ctx.accounts.token_program_stable.to_account_info(),
+        CloseAccount {
+          account: ctx.accounts.stable_coin_vault_token_account.to_account_info(),
+          destination: ctx.accounts.admin.to_account_info(),
+          authority: ctx.accounts.program_authority.to_account_info(),
+        },
+       &[signer_seeds],
+   )
+)?;
+\end{minted}
+
+\subsection{Gas Optimization}\label{gas-optimization}
+
+\subsubsection{Unnecessary CPI call when protocol fees are
+zero}\label{unnecessary-cpi-call-when-protocol-fees-are-zero}
+
+\textbf{Severity:} Gas Optimization
+
+\textbf{Context:}
+\href{https://cantina.xyz/code/8efd57ef-c9ac-42f8-8e03-4e4a1f0ab2a7/programs/swap-program/src/instructions/swap.rs\#L264-L273}{swap.rs\#L264-L273},
+\href{https://cantina.xyz/code/8efd57ef-c9ac-42f8-8e03-4e4a1f0ab2a7/programs/swap-program/src/instructions/swap.rs\#L285-L294}{swap.rs\#L285-L294}
+
+\textbf{Description:} The \texttt{swap()} function in swap.rs makes CPI
+calls to transfer protocol fees even when the fee amount is zero,
+unnecessarily wasting compute units.
+
+\textbf{Recommendation:} Consider adding a conditional check to skip the
+transfer CPI when protocol fees are zero (only if protocol\_fees can be
+zero). If it will never be set to zero, then adding an additional check
+is redundant and this finding could be safely "acknowledged".
+
+\subsection{Informational}\label{informational}
+
+\subsubsection{Unused macros and error
+codes}\label{unused-macros-and-error-codes}
+
+\textbf{Severity:} Informational
+
+\textbf{Context:}
+\href{https://cantina.xyz/code/8efd57ef-c9ac-42f8-8e03-4e4a1f0ab2a7/programs/swap-program/src/error.rs\#L4}{error.rs\#L4},
+\href{https://cantina.xyz/code/8efd57ef-c9ac-42f8-8e03-4e4a1f0ab2a7/programs/swap-program/src/macros.rs\#L1}{macros.rs\#L1}
+
+\textbf{Description:} The codebase contains several instances of dead
+code that is defined but never used throughout the program:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  Unused Macro. The assert\_range macro is defined and exported with
+  \#{[}macro\_export{]} but has zero usages across the entire codebase.
+\item
+  Unused Error Code Variants. Seven error code enum variants are
+  defined, but never referenced in any instruction or validation logic:
+\end{enumerate}
+
+\begin{itemize}
+\tightlist
+\item
+  InvalidNewAdmin.
+\item
+  NotAdmin.
+\item
+  InvalidMintAddress.
+\item
+  MustProvidePriceDecimals.
+\item
+  MustProvideNavProgramIdOrNavAccountDiscriminator.
+\item
+  MustProvideNavPriceOffset.
+\item
+  LpFeeMustBePositive.
+\end{itemize}
+
+\textbf{Recommendation:}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Remove the unused assert\_range macro from \texttt{macro.rs}.
+\item
+  Remove all seven unused error code variants from \texttt{error.rs} to
+  maintain a clean error enumeration that only includes actively used
+  error cases.
+\end{enumerate}
+
+\subsubsection{\texorpdfstring{Missing token account type constraints in
+\texttt{spl\_helpers::transfer()}}{Missing token account type constraints in spl\_helpers::transfer()}}\label{missing-token-account-type-constraints-in-spl_helperstransfer}
+
+\textbf{Severity:} Informational
+
+\textbf{Context:}
+\href{https://cantina.xyz/code/8efd57ef-c9ac-42f8-8e03-4e4a1f0ab2a7/programs/swap-program/src/spl_helpers.rs\#L6-L7}{spl\_helpers.rs\#L6-L7}
+
+\textbf{Description:} The \texttt{spl\_helpers::transfer()} function
+accepts generic AccountInfo parameters for the from and to accounts
+instead of strongly-typed
+\texttt{InterfaceAccount\textless{}\textquotesingle{}info,\ TokenAccount\textgreater{}}
+parameters.
+
+Current state:
+
+\begin{itemize}
+\tightlist
+\item
+  All nine usage instances (swap.rs, claim\_fees.rs, close\_pair.rs,
+  add\_liquidity.rs, remove\_liquidity.rs) properly validate token
+  accounts at the instruction level with
+  \texttt{InterfaceAccount\textless{}\textquotesingle{}info,\ TokenAccount\textgreater{}}
+  and appropriate constraints.
+\item
+  Accounts are downgraded to AccountInfo when passed to the helper via
+  \texttt{.to\_account\_info()}.
+\item
+  The helper relies entirely on the SPL Token Program validation during
+  CPI.
+\end{itemize}
+
+While the current implementation is secure, it weakens
+Rust\textquotesingle s type-safety guarantees. Future code modifications
+or new call sites could accidentally pass incorrect account types, with
+errors only caught at runtime during CPI execution rather than at
+compile-time or during Anchor validation.
+
+\textbf{Recommendation:}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Change the helper function signature to enforce strong typing and
+  remove downgrading to type AccountInfo while passing it to the helper
+  in all usage instances.
+\end{enumerate}
+
+\begin{minted}[]{rust}
+from: &InterfaceAccount<'info, TokenAccount>,
+to: &InterfaceAccount<'info, TokenAccount>
+\end{minted}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{1}
+\tightlist
+\item
+  Alternatively, add relevant documentation in the
+  \texttt{spl\_helpers::transfer} function to ensure this behavior is
+  properly documented for future developers.
+\end{enumerate}
+
+\subsubsection{\texorpdfstring{Unused version field in
+\texttt{AssetConfig}
+struct}{Unused version field in AssetConfig struct}}\label{unused-version-field-in-assetconfig-struct}
+
+\textbf{Severity:} Informational
+
+\textbf{Context:}
+\href{https://cantina.xyz/code/8efd57ef-c9ac-42f8-8e03-4e4a1f0ab2a7/programs/swap-program/src/state/asset_config.rs\#L70-L71}{asset\_config.rs\#L70-L71}
+
+\textbf{Description:} The \texttt{AssetConfig} struct contains a version
+field that is defined but never used anywhere in the codebase. The
+version field is documented as "version of the NavData struct".
+
+\textbf{Recommendation:} Consider removing the unused field (or)
+implement version tracking if required and start from version 1 instead
+of 0.
+
+\subsubsection{\texorpdfstring{Error code \texttt{MathOverflow} used
+instead of \texttt{MathUnderflow} for \texttt{checked\_sub()}
+operations}{Error code MathOverflow used instead of MathUnderflow for checked\_sub() operations}}\label{error-code-mathoverflow-used-instead-of-mathunderflow-for-checked_sub-operations}
+
+\textbf{Severity:} Informational
+
+\textbf{Context:}
+\href{https://cantina.xyz/code/8efd57ef-c9ac-42f8-8e03-4e4a1f0ab2a7/programs/swap-program/src/math.rs\#L106-L112}{math.rs\#L106-L112},
+\href{https://cantina.xyz/code/8efd57ef-c9ac-42f8-8e03-4e4a1f0ab2a7/programs/swap-program/src/math.rs\#L180-L182}{math.rs\#L180-L182},
+\href{https://cantina.xyz/code/8efd57ef-c9ac-42f8-8e03-4e4a1f0ab2a7/programs/swap-program/src/math.rs\#L193-L196}{math.rs\#L193-L196}
+
+\textbf{Description:} The math.rs module inconsistently uses error codes
+for arithmetic operations. Multiple instances of \texttt{checked\_sub()}
+(subtraction) incorrectly return MathOverflow instead of MathUnderflow,
+making debugging significantly harder.
+
+\textbf{Recommendation:} Update all \texttt{checked\_sub()} operations
+to use MathUnderflow error code.
+
+\subsubsection{Typographical errors}\label{typographical-errors}
+
+\textbf{Severity:} Informational
+
+\textbf{Context:}
+\href{https://cantina.xyz/code/8efd57ef-c9ac-42f8-8e03-4e4a1f0ab2a7/programs/swap-program/src/state/asset_config.rs\#L4}{asset\_config.rs\#L4},
+\href{https://cantina.xyz/code/8efd57ef-c9ac-42f8-8e03-4e4a1f0ab2a7/programs/swap-program/src/state/asset_config.rs\#L81}{asset\_config.rs\#L81}
+
+\textbf{Description:}
+
+\begin{minted}[]{diff}
+- /// NavData is used to store info about the methpds to retrieve the NAV data for a specific asset
++ /// NavData is used to store info about the methods to retrieve the NAV data for a specific asset
+  
+  
+- // DRY function to read the price from an account (expecting the price to be stored as au64)
++ // DRY function to read the price from an account (expecting the price to be stored as u64)
+\end{minted}
+
+\subsubsection{NavData enum documentation is incomplete and
+misleading}\label{navdata-enum-documentation-is-incomplete-and-misleading}
+
+\textbf{Severity:} Informational
+
+\textbf{Context:}
+\href{https://cantina.xyz/code/8efd57ef-c9ac-42f8-8e03-4e4a1f0ab2a7/programs/swap-program/src/state/asset_config.rs\#L5-L11}{asset\_config.rs\#L5-L11}
+
+\textbf{Description:} The inline documentation for the \texttt{NavData}
+enum in \texttt{asset\_config.rs} states that "Currently we support
+three methods" for retrieving NAV data. However, the actual
+implementation supports four distinct methods. The fourth variant,
+\texttt{PythPush}, is completely omitted from the documentation comment.
+
+\textbf{Recommendation:} Update the inline documentation to reflect all
+four supported NAV data retrieval methods accurately.
+
+\subsubsection{\texorpdfstring{Integer overflow in
+\texttt{min\_acceptable\_nav} calculation causes transaction failure for
+large NAV
+values}{Integer overflow in min\_acceptable\_nav calculation causes transaction failure for large NAV values}}\label{integer-overflow-in-min_acceptable_nav-calculation-causes-transaction-failure-for-large-nav-values}
+
+\textbf{Severity:} Informational
+
+\textbf{Context:}
+\href{https://cantina.xyz/code/8efd57ef-c9ac-42f8-8e03-4e4a1f0ab2a7/programs/swap-program/src/state/asset_config.rs\#L260-L264}{asset\_config.rs\#L260-L264}
+
+\textbf{Description:} The \texttt{get\_nav()} function in
+\texttt{asset\_config.rs} performs a price difference validation check
+that is vulnerable to arithmetic overflow when NAV values are
+significant (has less price decimals).
+
+When \texttt{max\_nav} is sufficiently large (e.g., 1e18 = 1e9 with zero
+decimals), the multiplication operation
+\texttt{max\_nav.checked\_mul(10000\ -\ \ price\_difference\_bps\ as\ u64)}
+overflows the \texttt{u64} type and returns \texttt{None}. The
+subsequent \texttt{.unwrap()} call then panics with the error
+\texttt{Option::unwrap()} on a None value.
+
+This issue results in:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Denial of Service: Any asset with a NAV above approximately 1.84 ×
+  10\^{}15 (with 9 decimals) will cause all transactions to fail.
+\item
+  Unpredictable Failures: The issue only manifests when NAV reaches
+  certain thresholds, making it difficult to diagnose.
+\item
+  No Graceful Error Handling: The transaction panics rather than
+  returning a proper error code.
+\end{enumerate}
+
+\textbf{Proof of Concept:}
+
+\begin{itemize}
+\tightlist
+\item
+  \texttt{max\_nav} = 1\_000\_000\_000\_000\_000\_000 (1 quintillion,
+  representing a price of 1e9 asset with 0 decimals) -
+  \texttt{price\_difference\_bps} = 500 (5\% tolerance).
+\item
+  Calculation: 1\_000\_000\_000\_000\_000\_000 × (10000 - 500) =
+  1\_000\_000\_000\_000\_000\_000 × 9500 - Result: 9.5 × 10\^{}21, which
+  exceeds \texttt{u64::MAX} (18,446,744,073,709,551,615 ≈ 1.84 ×
+  10\^{}19) - The \texttt{checked\_mul()} returns \texttt{None}, causing
+  a panic.
+\end{itemize}
+
+\textbf{Recommendation:}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  Replace all \texttt{.unwrap()} calls with proper error handling using
+  \texttt{.ok\_or(ErrorCode::MathOverflow)?} which will return
+  meaningful error.
+\item
+  Add comprehensive tests with edge cases: Maximum safe NAV values,
+  Minimum price\_difference\_bps values, and Various combinations that
+  approach u64 limits.
+\item
+  Document maximum supported NAV values in the code comments.
+\end{enumerate}
+
+\textbf{Multiliquid:} Fixed by 4cf5446b3adfa8d12d8dc7f86a7007d6f3ffbec5
+(for now, we\textquotesingle ve added error handling with MathOverflow).
+
+The likelihood is really close to 0 (most of the stables will have a
+value around \$1, and for RWAs, we can\textquotesingle t imagine having
+such a NAV. Since it is not something a random user (the NAV) could set,
+we don\textquotesingle t see a security issue here either.
+
+\textbf{Cantina:} While the newly added error checks will detect and
+revert on overflows with more explicit error messages, the
+protocol\textquotesingle s capacity to safely handle large NAV values
+remains constrained. It may still result in unintended or unpredictable
+behavior.
+
+\subsubsection{\texorpdfstring{Function \texttt{set\_new\_admin()} does
+not check for duplicate
+assignment}{Function set\_new\_admin() does not check for duplicate assignment}}\label{function-set_new_admin-does-not-check-for-duplicate-assignment}
+
+\textbf{Severity:} Informational
+
+\textbf{Context:}
+\href{https://cantina.xyz/code/8efd57ef-c9ac-42f8-8e03-4e4a1f0ab2a7/programs/swap-program/src/instructions/set_new_admin.rs\#L23}{set\_new\_admin.rs\#L23}
+
+\textbf{Description:} The \texttt{set\_new\_admin()} function lacks
+validation to ensure that the new admin address differs from the current
+admin address. This allows the current admin to unnecessarily set
+themselves as the pending admin again, wasting transaction fees and
+emitting misleading events without actual state changes.
+
+\textbf{Recommendation:} Add validation to prevent setting the new admin
+to the current admin address:
+
+\begin{minted}[]{rust}
+require!(new_admin != global_config.admin, ErrorCode::AlreadyAdmin);
+\end{minted}
+
+\subsubsection{\texorpdfstring{Swap input amount limited to
+\textasciitilde18.45 tokens for 18-decimal tokens due to \texttt{u64}
+type}{Swap input amount limited to \textasciitilde18.45 tokens for 18-decimal tokens due to u64 type}}\label{swap-input-amount-limited-to-1845-tokens-for-18-decimal-tokens-due-to-u64-type}
+
+\textbf{Severity:} Informational
+
+\textbf{Context:}
+\href{https://cantina.xyz/code/8efd57ef-c9ac-42f8-8e03-4e4a1f0ab2a7/programs/swap-program/src/instructions/add_liquidity.rs\#L56}{add\_liquidity.rs\#L56},
+\href{https://cantina.xyz/code/8efd57ef-c9ac-42f8-8e03-4e4a1f0ab2a7/programs/swap-program/src/instructions/remove_liquidity.rs\#L58}{remove\_liquidity.rs\#L58},
+\href{https://cantina.xyz/code/8efd57ef-c9ac-42f8-8e03-4e4a1f0ab2a7/programs/swap-program/src/instructions/swap.rs\#L165}{swap.rs\#L165}
+
+\textbf{Description:} The swap instruction uses u64 to represent token
+amounts, which significantly restricts the maximum swappable amount for
+tokens with high decimal precision.
+
+For tokens with 18 decimals, the maximum value of u64
+(18,446,744,073,709,551,615) translates to only approximately 18.45
+tokens in human-readable terms:
+
+u64::MAX / 10\^{}18 = 18,446,744,073,709,551,615 /
+1,000,000,000,000,000,000 ≈ 18.45.
+
+This limitation severely restricts the protocol\textquotesingle s
+usability for:
+
+\begin{itemize}
+\tightlist
+\item
+  High-value swaps involving tokens with 18 decimals.
+\item
+  Liquidity provision operations that require larger amounts.
+\item
+  Any operation where users need to transact more than \textasciitilde18
+  tokens.
+\end{itemize}
+
+The issue affects not just swap operations but potentially all
+instruction parameters that handle token amounts using u64, including
+\texttt{add\_liquidity()}, \texttt{remove\_liquidity()}, and related
+functions.
+
+\textbf{Recommendation:} Replace u64 with u128 for all token amount
+parameters throughout the program. The u128 type provides sufficient
+range to handle tokens with up to 38 decimals at scale:
+
+u128::MAX / 10\^{}18 ≈ 340 trillion tokens.
+
+\subsubsection{\texorpdfstring{Redundant \texttt{mint\_address}
+assignment in
+\texttt{update\_asset\_config\_account()}}{Redundant mint\_address assignment in update\_asset\_config\_account()}}\label{redundant-mint_address-assignment-in-update_asset_config_account}
+
+\textbf{Severity:} Informational
+
+\textbf{Context:}
+\href{https://cantina.xyz/code/8efd57ef-c9ac-42f8-8e03-4e4a1f0ab2a7/programs/swap-program/src/instructions/update_asset_config_account.rs\#L48}{update\_asset\_config\_account.rs\#L48}
+
+\textbf{Description:} The \texttt{update\_asset\_config\_account()}
+function contains unnecessary computation where mint\_address is
+assigned or validated.
+
+Since the asset\_config account is a PDA derived with mint\_address as a
+seed, the Anchor framework already enforces that the account can only be
+accessed with the correct mint\_address used in derivation.
+
+Any assignment or validation of this field is redundant and wastes
+compute units.
+
+\textbf{Recommendation:} Remove the redundant mint\_address assignment
+or validation from the update\_asset\_config\_account function.
+
+\subsubsection{Redundant pause state initialization to default
+value}\label{redundant-pause-state-initialization-to-default-value}
+
+\textbf{Severity:} Informational
+
+\textbf{Context:}
+\href{https://cantina.xyz/code/8efd57ef-c9ac-42f8-8e03-4e4a1f0ab2a7/programs/swap-program/src/instructions/init_asset_config_account.rs\#L79}{init\_asset\_config\_account.rs\#L79},
+\href{https://cantina.xyz/code/8efd57ef-c9ac-42f8-8e03-4e4a1f0ab2a7/programs/swap-program/src/instructions/init_pair.rs\#L144}{init\_pair.rs\#L144}
+
+\textbf{Description:} In the \texttt{init\_pair()} and
+\texttt{init\_asset\_config\_account()} functions, the pause state is
+explicitly set to false, which is already the default value for boolean
+fields in newly initialized accounts. This redundant assignment wastes
+compute units without providing any functional benefit.
+
+\textbf{Recommendation:} Remove the explicit pause state assignment to
+false in both \texttt{init\_pair()} and
+\texttt{init\_asset\_config\_account()} functions.
+
+\textbf{Multiliquid:} Fixed in
+\href{https://github.com/exo-tech-xyz/multiliquid-swap-program/commit/e862529801c69e725a7b7eff9e1dfcc8bfa6f7e2}{e8625298}
+and
+\href{https://github.com/exo-tech-xyz/multiliquid-swap-program/commit/7f3591ab48671c4007cba0dc51f3583763a312a3}{7f3591ab}
+
+\subsubsection{\texorpdfstring{Use \texttt{UncheckedAccount} instead of
+\texttt{AccountInfo}}{Use UncheckedAccount instead of AccountInfo}}\label{use-uncheckedaccount-instead-of-accountinfo}
+
+\textbf{Severity:} Informational
+
+\textbf{Context:} \emph{(No context files were provided by the
+reviewer)}
+
+\textbf{Description:} Multiple instructions across the entire program
+use \texttt{AccountInfo} instead of \texttt{UncheckedAccount}, against
+the anchor\textquotesingle s suggestion.
+
+\textbf{Recommendation:} Consider replacing all instances of
+\texttt{AccountInfo} in-favor of \texttt{UncheckedAccount}.
+
+\subsubsection{\texorpdfstring{Unchecked \texttt{.unwrap()} in
+\texttt{SwapExecuted} event
+emission}{Unchecked .unwrap() in SwapExecuted event emission}}\label{unchecked-unwrap-in-swapexecuted-event-emission}
+
+\textbf{Severity:} Informational
+
+\textbf{Context:}
+\href{https://cantina.xyz/code/8efd57ef-c9ac-42f8-8e03-4e4a1f0ab2a7/programs/swap-program/src/instructions/swap.rs\#L331}{swap.rs\#L331}
+
+\textbf{Description:} The
+\texttt{amount\_in\_for\_vault.checked\_add(protocol\_fees).unwrap()}
+could panic if the addition overflows.
+
+\textbf{Recommendation:} Consider using \texttt{.ok\_or} at the end of
+the checked\_add to ensure the overflow is caught and reverted
+accordingly.
